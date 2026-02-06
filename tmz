@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Учет ТМЦ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+        
+        .table-container {
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .search-box input {
+            padding-left: 40px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            table {
+                font-size: 14px;
+            }
+            
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Учет ТМЦ</h1>
+        
+        <div class="form-group">
+            <label for="name">Наименование товара:</label>
+            <input type="text" id="name" placeholder="Введите наименование товара">
+        </div>
+        
+        <div class="form-group">
+            <label for="category">Категория:</label>
+            <select id="category">
+                <option value="продукты">Продукты</option>
+                <option value="бытовая_техника">Бытовая техника</option>
+                <option value="одежда">Одежда</option>
+                <option value="канцелярия">Канцелярия</option>
+                <option value="другое">Другое</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="quantity">Количество:</label>
+            <input type="number" id="quantity" placeholder="Введите количество" min="1">
+        </div>
+        
+        <div class="form-group">
+            <label for="price">Цена за единицу (₽):</label>
+            <input type="number" id="price" placeholder="Введите цену" min="0" step="0.01">
+        </div>
+        
+        <div class="form-group">
+            <label for="date">Дата поступления:</label>
+            <input type="date" id="date">
+        </div>
+        
+        <button class="btn" onclick="addItem()">Добавить товар</button>
+        
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search" placeholder="Поиск по наименованию или категории..." onkeyup="searchItems()">
+        </div>
+        
+        <div class="table-container">
+            <table id="itemsTable">
+                <thead>
+                    <tr>
+                        <th>Наименование</th>
+                        <th>Категория</th>
+                        <th>Количество</th>
+                        <th>Цена за ед. (₽)</th>
+                        <th>Общая стоимость (₽)</th>
+                        <th>Дата</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Данные будут добавляться сюда -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalItems">0</div>
+                <div class="stat-label">Всего товаров</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalValue">0</div>
+                <div class="stat-label">Общая стоимость (₽)</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalQuantity">0</div>
+                <div class="stat-label">Общее количество</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            // Установка сегодняшней даты по умолчанию
+            document.getElementById('date').valueAsDate = new Date();
+            
+            // Загрузка данных из localStorage
+            loadItems();
+        });
+        
+        // Массив для хранения товаров
+        let items = [];
+        
+        // Функция добавления товара
+        function addItem() {
+            const name = document.getElementById('name').value.trim();
+            const category = document.getElementById('category').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const price = parseFloat(document.getElementById('price').value);
+            const date = document.getElementById('date').value;
+            
+            // Валидация
+            if (!name || !quantity || !price || !date) {
+                alert('Пожалуйста, заполните все поля!');
+                return;
+            }
+            
+            if (quantity <= 0 || price < 0) {
+                alert('Количество должно быть больше 0, цена не может быть отрицательной!');
+                return;
+            }
+            
+            // Создание объекта товара
+            const item = {
+                id: Date.now(), // уникальный идентификатор
+                name: name,
+                category: category,
+                quantity: quantity,
+                price: price,
+                date: date,
+                total: (quantity * price).toFixed(2)
+            };
+            
+            // Добавление в массив
+            items.push(item);
+            
+            // Сохранение в localStorage
+            saveItems();
+            
+            // Очистка формы
+            document.getElementById('name').value = '';
+            document.getElementById('quantity').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('date').valueAsDate = new Date();
+            
+            // Обновление таблицы
+            renderTable();
+            
+            // Показать уведомление
+            alert('Товар успешно добавлен!');
+        }
+        
+        // Функция удаления товара
+        function deleteItem(id) {
+            if (confirm('Вы уверены, что хотите удалить этот товар?')) {
+                items = items.filter(item => item.id !== id);
+                saveItems();
+                renderTable();
+            }
+        }
+        
+        // Функция редактирования товара
+        function editItem(id) {
+            const item = items.find(item => item.id === id);
+            if (!item) return;
+            
+            document.getElementById('name').value = item.name;
+            document.getElementById('category').value = item.category;
+            document.getElementById('quantity').value = item.quantity;
+            document.getElementById('price').value = item.price;
+            document.getElementById('date').value = item.date;
+            
+            deleteItem(id);
+        }
+        
+        // Функция отображения таблицы
+        function renderTable(filteredItems = null) {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            const itemsToShow = filteredItems || items;
+            
+            if (itemsToShow.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Нет товаров</td></tr>';
+                updateStats();
+                return;
+            }
+            
+            itemsToShow.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // Определение категории для отображения
+                let categoryText = '';
+                switch(item.category) {
+                    case 'продукты': categoryText = '🍎 Продукты'; break;
+                    case 'бытовая_техника': categoryText = '📺 Бытовая техника'; break;
+                    case 'одежда': categoryText = '👕 Одежда'; break;
+                    case 'канцелярия': categoryText = '✏️ Канцелярия'; break;
+                    case 'другое': categoryText = '📦 Другое'; break;
+                }
+                
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${categoryText}</td>
+                    <td>${item.quantity}</td>
+                    <td>${item.price.toFixed(2)}</td>
+                    <td>${item.total}</td>
+                    <td>${formatDate(item.date)}</td>
+                    <td class="actions">
+                        <button class="btn" onclick="editItem(${item.id})" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">✏️</button>
+                        <button class="btn btn-delete" onclick="deleteItem(${item.id})">🗑️</button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            updateStats();
+        }
+        
+        // Функция обновления статистики
+        function updateStats() {
+            const totalItems = items.length;
+            const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+            const totalValue = items.reduce((sum, item) => sum + parseFloat(item.total), 0);
+            
+            document.getElementById('totalItems').textContent = totalItems;
+            document.getElementById('totalQuantity').textContent = totalQuantity;
+            document.getElementById('totalValue').textContent = totalValue.toFixed(2);
+        }
+        
+        // Функция поиска
+        function searchItems() {
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            
+            if (!searchTerm) {
+                renderTable();
+                return;
+            }
+            
+            const filteredItems = items.filter(item => 
+                item.name.toLowerCase().includes(searchTerm) || 
+                item.category.toLowerCase().includes(searchTerm)
+            );
+            
+            renderTable(filteredItems);
+        }
+        
+        // Функция форматирования даты
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ru-RU', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+        
+        // Функция сохранения в localStorage
+        function saveItems() {
+            localStorage.setItem('tmzItems', JSON.stringify(items));
+        }
+        
+        // Функция загрузки из localStorage
+        function loadItems() {
+            const savedItems = localStorage.getItem('tmzItems');
+            if (savedItems) {
+                items = JSON.parse(savedItems);
+                renderTable();
+            }
+        }
+        
+        // Экспорт данных
+        function exportData() {
+            const dataStr = JSON.stringify(items, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'tmz-data-' + new Date().toISOString().slice(0,10) + '.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        
+        // Импорт данных
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const importedItems = JSON.parse(event.target.result);
+                        items = importedItems;
+                        saveItems();
+                        renderTable();
+                        alert('Данные успешно импортированы!');
+                    } catch (error) {
+                        alert('Ошибка при импорте данных: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+    </script>
+</body>
+</html>
